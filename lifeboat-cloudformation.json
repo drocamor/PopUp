@@ -1,0 +1,44 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09", 
+    "Description": "Creates an EC2 Security Group, SimpleDB Domain, and IAM key/secret key for lifeboat.",
+    "Resources": {
+	"lifeboatSecurityGroup": {
+            "Properties": {
+		"Type": "AWS::EC2::SecurityGroup",
+                "GroupDescription": "Allow SSH and Mosh access to Lifeboat instances.", 
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "0.0.0.0/0", 
+                        "FromPort": "22", 
+                        "IpProtocol": "tcp", 
+                        "ToPort": "22"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0", 
+                        "FromPort": "60000", 
+                        "IpProtocol": "udp", 
+                        "ToPort": "61000"
+                    }
+                ]
+            }
+        },
+	"lifeboatSimpleDBDomain": {
+	    "Type": "AWS::SDB::Domain"
+	},
+	"lifeboatUser": {
+	    "Properties": {
+                "Policies": [
+                    {
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": "sdb:*", 
+                                    "Effect": "Allow", 
+                                    "Resource": { 
+					"Fn::Join": [ "",
+						      ["arn:aws:sdb:",
+						       { "Ref" : "AWS::Region" },
+						       "<account id>",
+						       ":domain/",
+						       {"Ref": "lifeboatSimpleDBDomain"}]
+                                }, 
