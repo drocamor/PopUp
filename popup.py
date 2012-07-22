@@ -8,8 +8,8 @@ import time
 
 def cloudConfig(config):
     output = ["#cloud-config",
-              "apt_update: true",
-              "apt_upgrade: true"]
+              "#apt_update: true",
+              "#apt_upgrade: true"]
     if config.get("PopUp", "packages"):
         output.append("packages:")
         for package in config.get("PopUp", "packages").split(' '):
@@ -18,11 +18,11 @@ def cloudConfig(config):
     output.append("runcmd:")
 
     try:
-        run_time = config.getint("PopUp", "run_time")
+        run_time = config.getint("PopUp", "run_time") * 60
     except ConfigParser.NoOptionError:
-        run_time = 240
+        run_time = 240 * 60 
       
-    output.append(" - [ shutdown, -h, +%i ]" % run_time)
+    output.append(" - echo \* \* \* \* \* [ \$\(cut -d. -f1 /proc/uptime\) -gt %i ] \&\& /sbin/shutdown -h now | /usr/bin/crontab " % run_time)
     output.append("# Thanks for using PopUp!")
     return "\n".join(output)
 

@@ -10,9 +10,11 @@ Creates ephemeral EC2 instances so you always have a good computer somewhere.
 # PopUp sets tags on the instance
 # EC2 instances get configured with packages
 # EC2 instances shutdown after their time is expired (naively)
+# The shutdown mechanism is a bit more robust
 
 # Todos #
-# The shutdown mechanism is a bit more flexible
+# PopUp allows you to put arbitrary scripts in the config
 # PopUp updates ~/.ssh/config with a shortcut
 # You can extend the time that an instance will run for
 # PopUp can automatically install dropbox on the instance
+# This readme is a bit more verbose
