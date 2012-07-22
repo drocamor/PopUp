@@ -6,13 +6,35 @@ import ConfigParser
 import os
 import time
 
+def cloudConfig(config):
+    output = ["#cloud-config",
+              "apt_update: true",
+              "apt_upgrade: true"]
+    if config.get("PopUp", "packages"):
+        output.append("packages:")
+        for package in config.get("PopUp", "packages").split(' '):
+            output.append(" - %s" % package)
+  
+    output.append("runcmd:")
+
+    try:
+        run_time = config.getint("PopUp", "run_time")
+    except ConfigParser.NoOptionError:
+        run_time = 240
+      
+    output.append(" - [ shutdown, -h, +%i ]" % run_time)
+    output.append("# Thanks for using PopUp!")
+    return "\n".join(output)
+
 def startInstance(config):
     conn = boto.connect_ec2()
     reservation = conn.run_instances(image_id = config.get("EC2", "ami"),
                                      key_name = config.get("EC2", "keypair"),
                                      security_groups = [config.get("EC2", "security_group")],
                                      instance_type = config.get("EC2", "instance_type"),
-                                     instance_initiated_shutdown_behavior = "terminate")
+                                     instance_initiated_shutdown_behavior = "terminate",
+                                     user_data = cloudConfig(config))
+
     instance = reservation.instances[0]
     # Find the instances hostname
     while instance.public_dns_name is '':
