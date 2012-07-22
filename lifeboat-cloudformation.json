@@ -35,10 +35,78 @@
                                     "Action": "sdb:*", 
                                     "Effect": "Allow", 
                                     "Resource": { 
-					"Fn::Join": [ "",
-						      ["arn:aws:sdb:",
-						       { "Ref" : "AWS::Region" },
-						       "<account id>",
-						       ":domain/",
-						       {"Ref": "lifeboatSimpleDBDomain"}]
-                                }, 
+					"Fn::Join": [ 
+					    "",
+					    ["arn:aws:sdb:",
+					     { "Ref" : "AWS::Region" },
+					     "<account id>",
+					     ":domain/",
+					     {"Ref": "lifeboatSimpleDBDomain"}]
+					}
+				    }
+				},
+				{
+				    "Action": [
+					"ec2:DescribeInstanceStatus",
+					"ec2:DescribeInstances",
+					"ec2:StartInstances",
+					"ec2:TerminateInstances"
+				    ],
+				    "Effect": "Allow",
+				    "Resource": [
+					"*"
+				    ]
+				}
+			    ]
+			}
+		    }
+		]
+	    }
+	},
+        "lifeboatKey": {
+            "Properties": {
+                "UserName": {
+                    "Ref": "lifeboatUser"
+                }
+            }, 
+            "Type": "AWS::IAM::AccessKey"
+        },
+        "lifeboatKey": {
+            "Properties": {
+                "UserName": {
+                    "Ref": "PollsterClientUser"
+                }
+            }, 
+            "Type": "AWS::IAM::AccessKey"
+        }, 
+    },
+    "Outputs": {
+	"lifeboatSimpleDBDomain": {
+	    "Description": "SimpleDB domain that lifeboat uses to coordinate EC2 operations.",
+	    "Value": {
+		"Ref": "lifeboatSimpleDBDomain"
+	    }
+	},
+	"lifeboatSecurityGroup": {
+	    "Description": "EC2 security group for lifeboat instances.",
+	    "Value": {
+	 	"Ref": "lifeboatSecurityGroup"
+	    }
+	},
+	"lifeboatClientAccessKey": {
+            "Description": "IAM access key for lifeboat client.", 
+            "Value": {
+                "Ref": "lifeboatUser"
+            }
+        }, 
+        "lifeboatClientSecretKey": {
+            "Description": "IAM secret key for lifeboat client.",
+            "Value": {
+                "Fn::GetAtt": [
+                    "lifeboatKey", 
+                    "SecretAccessKey"
+                ]
+            }
+        }
+    }
+}
