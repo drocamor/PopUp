@@ -4,13 +4,26 @@ import argparse
 import boto
 import ConfigParser
 import os
+import time
 
 def startInstance(config):
     conn = boto.connect_ec2()
-    conn.run_instances(image_id = config.get("EC2", "ami"),
-                       key_name = config.get("EC2", "keypair"),
-                       security_groups = [config.get("EC2", "security_group")],
-                       instance_type = config.get("EC2", "instance_type"))
+    reservation = conn.run_instances(image_id = config.get("EC2", "ami"),
+                                     key_name = config.get("EC2", "keypair"),
+                                     security_groups = [config.get("EC2", "security_group")],
+                                     instance_type = config.get("EC2", "instance_type"),
+                                     instance_initiated_shutdown_behavior = "terminate")
+    instance = reservation.instances[0]
+    # Find the instances hostname
+    while instance.public_dns_name is '':
+        time.sleep(5)
+        instance.update()
+    # Create some tags
+    conn.create_tags([instance.id],
+                     {'Name': 'PopUp Ephemeral Instance',
+                      'popup': 'True'})
+    print "Instance hostname is %s" % instance.public_dns_name
+    
 
 # Read config file
 Config = ConfigParser.ConfigParser()
