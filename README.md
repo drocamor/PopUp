@@ -12,8 +12,10 @@ Creates ephemeral EC2 instances so you always have a good computer somewhere.
 # EC2 instances shutdown after their time is expired (naively)
 # The shutdown mechanism is a bit more robust
 # PopUp allows you to put arbitrary scripts in the config
+# PopUp updates ~/.ssh/config with a shortcut
 
 # Todos #
-# PopUp updates ~/.ssh/config with a shortcut
-# You can extend the time that an instance will run for
 # This readme is a bit more verbose
+# PopUp makes sure you don't have an instance running already
+# You can extend the time that an instance will run for
+

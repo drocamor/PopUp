@@ -5,6 +5,27 @@ import boto
 import ConfigParser
 import os
 import time
+import re
+
+def updateSSHConfig(ssh_alias):
+    popup_replacer = re.compile('# Begin PopUp Config.*?# End PopUp Config', re.DOTALL)
+    popup_pre = "# Begin PopUp Config\n# (This stuff is automatically added and deleted by PopUp)\n"
+    popup_post = "# End PopUp Config"
+
+    try:
+        ssh_config_file = open(os.path.expanduser("~/.ssh/config"), 'r')
+        ssh_config = ssh_config_file.read()
+        ssh_config_file.close()
+        new_ssh_config = popup_replacer.sub(popup_pre + ssh_alias + popup_post, ssh_config)
+    except IOError:
+        new_ssh_config = popup_pre + ssh_alias + popup_post
+    finally:
+        ssh_config_file = open(os.path.expanduser("~/.ssh/config"), 'w')
+        ssh_config_file.write(new_ssh_config)
+        ssh_config_file.close()
+    
+    
+
 
 def cloudConfig(config):
     output = ["#cloud-config",
@@ -51,7 +72,13 @@ def startInstance(config):
     conn.create_tags([instance.id],
                      {'Name': 'PopUp Ephemeral Instance',
                       'popup': 'True'})
-    print "Instance hostname is %s" % instance.public_dns_name
+    
+    updateSSHConfig("Host %s\nHostname %s\nUser %s\n" % (config.get("PopUp", "alias"),
+                                                         instance.public_dns_name,
+                                                         config.get("PopUp", "username")))
+    print "SSH config updated. Instance %s at %s with SSH alias %s available." % (instance.id,
+                                                                                  instance.public_dns_name,
+                                                                                  config.get("PopUp", "alias"))
     
 
 # Read config file
