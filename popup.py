@@ -8,7 +8,7 @@ import time
 
 def cloudConfig(config):
     output = ["#cloud-config",
-              "#apt_update: true",
+              "apt_update: true",
               "#apt_upgrade: true"]
     if config.get("PopUp", "packages"):
         output.append("packages:")
@@ -16,12 +16,19 @@ def cloudConfig(config):
             output.append(" - %s" % package)
   
     output.append("runcmd:")
-
+    # If there are any commands in the config file, insert them here
+    
+    try:
+        for script in Config.items('Scripts'):
+             output.append(" - %s" % script[1])
+    except ConfigParser.NoSectionError:
+        pass
+        
     try:
         run_time = config.getint("PopUp", "run_time") * 60
     except ConfigParser.NoOptionError:
         run_time = 240 * 60 
-      
+     
     output.append(" - echo \* \* \* \* \* [ \$\(cut -d. -f1 /proc/uptime\) -gt %i ] \&\& /sbin/shutdown -h now | /usr/bin/crontab " % run_time)
     output.append("# Thanks for using PopUp!")
     return "\n".join(output)
@@ -76,18 +83,6 @@ else:
     print 'Invalid action.'
     parser.print_help()
     exit(1)
-
-## Start instance
-# Build a config (user, key, packages, cron job to update/shutdown)
-# Start an instance
-# Add the instance details to SimpleDB
-# Update the .ssh/config file ?
- 
-## Status
-# Get some instance status from EC2
-
-## Clean
-# Warn if the instance isn't terminated
 
 
 
