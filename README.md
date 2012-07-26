@@ -30,6 +30,5 @@ Todos
 =====
 * PopUp makes sure you don't have an instance running already
 * You can extend the time that an instance will run for
-* There's a script to install and configure oh-my-zsh
-* There's a script to install and configure DropBox
+
 
