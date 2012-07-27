@@ -7,6 +7,16 @@ import os
 import time
 import re
 
+def findPopUp(config):
+    conn = boto.connect_ec2()
+    # I really suck at list comprehension
+    all_instances =  [ res.instances for res in conn.get_all_instances() ]
+    flattened_all_instances =  [ i for i in all_instances for i in i ]
+    running_instances = [ i for i in flattened_all_instances if i.state == 'running' ]
+    running_popup_instances = [ i for i in running_instances if i.tags.has_key('popup-unique-id') and i.tags['popup-unique-id'] == config.get("PopUp", "id") ]
+
+    return running_popup_instances
+
 def updateSSHConfig(ssh_alias):
     popup_replacer = re.compile('# Begin PopUp Config.*?# End PopUp Config', re.DOTALL)
     popup_pre = "# Begin PopUp Config\n# (This stuff is automatically added and deleted by PopUp)\n"
@@ -71,7 +81,8 @@ def startInstance(config):
     # Create some tags
     conn.create_tags([instance.id],
                      {'Name': 'PopUp Ephemeral Instance',
-                      'popup': 'True'})
+                      'popup': 'True',
+                      'popup-unique-id': config.get("PopUp", "id")})
     
     updateSSHConfig("Host %s\nHostname %s\nUser %s\n" % (config.get("PopUp", "alias"),
                                                          instance.public_dns_name,
@@ -103,7 +114,9 @@ if action == 'start':
     print 'Starting an instance...'
     startInstance(Config)
 elif action == 'status':
-    print 'Instance status...'
+    print 'Getting status of running instances'
+    for instance in findPopUp(Config):
+        print "PopUp: %s at %s " % (instance.id, instance.public_dns_name)
 elif action == 'cleanup':
     print 'Cleaning up...'
 else:
