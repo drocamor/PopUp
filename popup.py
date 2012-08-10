@@ -14,7 +14,6 @@ def findPopUp(config):
     flattened_all_instances =  [ i for i in all_instances for i in i ]
     running_instances = [ i for i in flattened_all_instances if i.state == 'running' ]
     running_popup_instances = [ i for i in running_instances if i.tags.has_key('popup-unique-id') and i.tags['popup-unique-id'] == config.get("PopUp", "id") ]
-
     return running_popup_instances
 
 def updateSSHConfig(ssh_alias):
@@ -32,46 +31,19 @@ def updateSSHConfig(ssh_alias):
     finally:
         ssh_config_file = open(os.path.expanduser("~/.ssh/config"), 'w')
         ssh_config_file.write(new_ssh_config)
-        ssh_config_file.close()
-    
-    
-
-
-def cloudConfig(config):
-    output = ["#cloud-config",
-              "apt_update: true",
-              "#apt_upgrade: true"]
-    if config.get("PopUp", "packages"):
-        output.append("packages:")
-        for package in config.get("PopUp", "packages").split(' '):
-            output.append(" - %s" % package)
-  
-    output.append("runcmd:")
-    # If there are any commands in the config file, insert them here
-    
-    try:
-        for script in Config.items('Scripts'):
-             output.append(" - %s" % script[1])
-    except ConfigParser.NoSectionError:
-        pass
-        
-    try:
-        run_time = config.getint("PopUp", "run_time") * 60
-    except ConfigParser.NoOptionError:
-        run_time = 240 * 60 
-     
-    output.append(" - echo \* \* \* \* \* [ \$\(cut -d. -f1 /proc/uptime\) -gt %i ] \&\& /sbin/shutdown -h now | /usr/bin/crontab " % run_time)
-    output.append("# Thanks for using PopUp!")
-    return "\n".join(output)
+        ssh_config_file.close()    
 
 def startInstance(config):
     conn = boto.connect_ec2()
+    f = open(os.path.expanduser(config.get("PopUp", "user_data_file")))
+    user_data = f.read()
+    f.close()
     reservation = conn.run_instances(image_id = config.get("EC2", "ami"),
                                      key_name = config.get("EC2", "keypair"),
                                      security_groups = [config.get("EC2", "security_group")],
                                      instance_type = config.get("EC2", "instance_type"),
                                      instance_initiated_shutdown_behavior = "terminate",
-                                     user_data = cloudConfig(config))
+                                     user_data = user_data)
 
     instance = reservation.instances[0]
     # Find the instances hostname

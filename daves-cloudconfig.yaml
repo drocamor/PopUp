@@ -1,0 +1,17 @@
+#cloud-config
+apt_update: true
+#apt_upgrade: true
+packages:
+ - mosh
+ - emacs
+ - zsh
+ - git
+ - python-gpgme
+ - build-essential
+runcmd:
+ - sudo -u ubuntu git clone git://github.com/robbyrussell/oh-my-zsh.git /home/ubuntu/.oh-my-zsh
+ - sudo -u ubuntu git clone git://github.com/drocamor/dotfiles.git /home/ubuntu/Documents/dotfiles && sudo -u ubuntu /home/ubuntu/Documents/dotfiles/dotfiles-installer.sh
+ - chsh -s /usr/bin/zsh ubuntu
+ - sudo -u ubuntu mkdir -p ~/bin && sudo -u ubuntu wget https://www.dropbox.com/download?dl=packages/dropbox.py -O ~/bin/dropbox && chmod +x ~/bin/dropbox
+ - echo \* \* \* \* \* [ \$\(cut -d. -f1 /proc/uptime\) -gt 1800 ] \&\& /sbin/shutdown -h now | /usr/bin/crontab 
+# Thanks for using PopUp!
