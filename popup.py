@@ -34,28 +34,6 @@ def updateSSHConfig(ssh_alias):
         ssh_config_file.close()    
 
 def startInstance(config):
-    conn = boto.connect_ec2()
-    f = open(os.path.expanduser(config.get("PopUp", "user_data_file")))
-    user_data = f.read()
-    f.close()
-    reservation = conn.run_instances(image_id = config.get("EC2", "ami"),
-                                     key_name = config.get("EC2", "keypair"),
-                                     security_groups = [config.get("EC2", "security_group")],
-                                     instance_type = config.get("EC2", "instance_type"),
-                                     instance_initiated_shutdown_behavior = "terminate",
-                                     user_data = user_data)
-
-    instance = reservation.instances[0]
-    # Find the instances hostname
-    while instance.public_dns_name is '':
-        time.sleep(5)
-        instance.update()
-    # Create some tags
-    conn.create_tags([instance.id],
-                     {'Name': 'PopUp Ephemeral Instance',
-                      'popup': 'True',
-                      'popup-unique-id': config.get("PopUp", "id")})
-    
     updateSSHConfig("Host %s\nHostname %s\nUser %s\n" % (config.get("PopUp", "alias"),
                                                          instance.public_dns_name,
                                                          config.get("PopUp", "username")))
@@ -64,13 +42,49 @@ def startInstance(config):
                                                                                   config.get("PopUp", "alias"))
     
 
+class PopUp:
+    """"A PopUp Instance"""
+    def __init__(self, image_id, key_name, security_group,
+                 instance_type, user_data, popup_id):
+        self.image_id = image_id
+        self.key_name = key_name
+        self.security_group = security_group
+        self.instance_type = instance_type
+        self.user_data = user_data
+        self.popup_id = popup_id
+        self.ec2 = boto.connect_ec2()
+
+    def start(self):
+        reservation = self.ec2.run_instances(image_id = self.image_id,
+                                             key_name = self.key_name,
+                                             security_groups = [self.security_group],
+                                             instance_type = self.instance_type,
+                                             instance_initiated_shutdown_behavior = "terminate",
+                                             user_data = self.user_data)
+
+        instance = reservation.instances[0]
+        # Find the instances hostname
+        while instance.public_dns_name is '':
+            time.sleep(5)
+            instance.update()
+
+        # Create some tags
+        self.ec2.create_tags([instance.id],
+                             {'Name': 'PopUp Ephemeral Instance',
+                              'popup': 'True',
+                              'popup-unique-id': self.popup_id})
+
+        self.id = instance.id
+        self.public_dns_name = instance.public_dns_name
+
+
 # Read config file
-Config = ConfigParser.ConfigParser()
-Config.read(os.path.expanduser("~/.popup.conf"))
+config = ConfigParser.ConfigParser()
+config.read(os.path.expanduser("~/.popup.conf"))
 
 # Quit if we don't have the right options
-for option in ["ami", "instance_type", "security_group", "keypair"]:
-    if Config.has_option("EC2",option) is not True:
+for option in ["image_id", "instance_type", "security_group", "key_name"]:
+    if config.has_option("EC2",option) is not True:
         print "Config file missing %s in EC2 section. Exiting..." % option
         exit(1)
 
@@ -84,10 +98,31 @@ action = args.action[0]
 
 if action == 'start':
     print 'Starting an instance...'
-    startInstance(Config)
+    # Read in the user-data file
+    try:
+        f = open(os.path.expanduser(config.get("PopUp", "user_data_file")))
+        user_data = f.read()
+        f.close()
+    except:
+        exit(1)
+    # Create a new popup object
+    popup = PopUp(image_id = config.get("EC2", "image_id"),
+                  key_name = config.get("EC2", "key_name"),
+                  security_group = config.get("EC2", "security_group"),
+                  instance_type = config.get("EC2", "instance_type"),
+                  popup_id = config.get("PopUp", "id"),
+                  user_data = user_data)
+
+    # Start the instance
+    popup.start()
+    print popup.id
+    print popup.public_dns_name
+    #popup.updateSSHConfig()
+    #print "PopUp instance %s started." % popup.id
+
 elif action == 'status':
     print 'Getting status of running instances'
-    for instance in findPopUp(Config):
+    for instance in PopUp.findInstances():
         print "PopUp: %s at %s " % (instance.id, instance.public_dns_name)
 elif action == 'cleanup':
     print 'Cleaning up...'
