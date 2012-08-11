@@ -16,42 +16,20 @@ def findPopUp(config):
     running_popup_instances = [ i for i in running_instances if i.tags.has_key('popup-unique-id') and i.tags['popup-unique-id'] == config.get("PopUp", "id") ]
     return running_popup_instances
 
-def updateSSHConfig(ssh_alias):
-    popup_replacer = re.compile('# Begin PopUp Config.*?# End PopUp Config', re.DOTALL)
-    popup_pre = "# Begin PopUp Config\n# (This stuff is automatically added and deleted by PopUp)\n"
-    popup_post = "# End PopUp Config"
-
-    try:
-        ssh_config_file = open(os.path.expanduser("~/.ssh/config"), 'r')
-        ssh_config = ssh_config_file.read()
-        ssh_config_file.close()
-        new_ssh_config = popup_replacer.sub(popup_pre + ssh_alias + popup_post, ssh_config)
-    except IOError:
-        new_ssh_config = popup_pre + ssh_alias + popup_post
-    finally:
-        ssh_config_file = open(os.path.expanduser("~/.ssh/config"), 'w')
-        ssh_config_file.write(new_ssh_config)
-        ssh_config_file.close()    
-
-def startInstance(config):
-    updateSSHConfig("Host %s\nHostname %s\nUser %s\n" % (config.get("PopUp", "alias"),
-                                                         instance.public_dns_name,
-                                                         config.get("PopUp", "username")))
-    print "SSH config updated. Instance %s at %s with SSH alias %s available." % (instance.id,
-                                                                                  instance.public_dns_name,
-                                                                                  config.get("PopUp", "alias"))
     
-
 class PopUp:
     """"A PopUp Instance"""
     def __init__(self, image_id, key_name, security_group,
-                 instance_type, user_data, popup_id):
+                 instance_type, user_data, popup_id,
+                 alias, user_name):
         self.image_id = image_id
         self.key_name = key_name
         self.security_group = security_group
         self.instance_type = instance_type
         self.user_data = user_data
         self.popup_id = popup_id
+        self.alias = alias
+        self.user_name = user_name
         self.ec2 = boto.connect_ec2()
 
     def start(self):
@@ -76,6 +54,28 @@ class PopUp:
 
         self.id = instance.id
         self.public_dns_name = instance.public_dns_name
+
+    def createSSHAlias(self):
+            popup_replacer = re.compile('# Begin PopUp Config.*?# End PopUp Config', re.DOTALL)
+            popup_ssh_alias = "\n".join(['# Begin PopUp Config',
+                                         '# (This stuff is automatically added and deleted by PopUp)',
+                                         'Host %s' % self.alias,
+                                         'Hostname %s' % self.public_dns_name,
+                                         'User %s' % self.user_name,
+                                         '# End PopUp Config'])
+            
+            try:
+                ssh_config_file = open(os.path.expanduser("~/.ssh/config"), 'r')
+                ssh_config = ssh_config_file.read()
+                ssh_config_file.close()
+                new_ssh_config = popup_replacer.sub(popup_ssh_alias, ssh_config)
+            except IOError:
+                new_ssh_config = popup_ssh_alias
+            finally:
+                ssh_config_file = open(os.path.expanduser("~/.ssh/config"), 'w')
+                ssh_config_file.write(new_ssh_config)
+                ssh_config_file.close()    
+
 
 
 # Read config file
@@ -111,14 +111,19 @@ if action == 'start':
                   security_group = config.get("EC2", "security_group"),
                   instance_type = config.get("EC2", "instance_type"),
                   popup_id = config.get("PopUp", "id"),
-                  user_data = user_data)
+                  user_data = user_data,
+                  alias = config.get("PopUp", "alias"),
+                  user_name = config.get("PopUp", "user_name"))
 
     # Start the instance
     popup.start()
+    
     print popup.id
     print popup.public_dns_name
-    #popup.updateSSHConfig()
-    #print "PopUp instance %s started." % popup.id
+    
+    popup.createSSHAlias()
+
+    print "PopUp instance %s started." % popup.id
 
 elif action == 'status':
     print 'Getting status of running instances'
