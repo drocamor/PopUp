@@ -13,5 +13,5 @@ runcmd:
  - sudo -u ubuntu git clone git://github.com/robbyrussell/oh-my-zsh.git /home/ubuntu/.oh-my-zsh
  - sudo -u ubuntu git clone git://github.com/drocamor/dotfiles.git /home/ubuntu/Documents/dotfiles && sudo -u ubuntu /home/ubuntu/Documents/dotfiles/dotfiles-installer.sh
  - chsh -s /usr/bin/zsh ubuntu
- - echo \* \* \* \* \* [ \$\(cut -d. -f1 /proc/uptime\) -gt 1800 ] \&\& /sbin/shutdown -h now | /usr/bin/crontab 
+ - echo \* \* \* \* \* [ \$\(cut -d. -f1 /proc/uptime\) -gt 86400 ] \&\& /sbin/shutdown -h now | /usr/bin/crontab 
 # Thanks for using PopUp!

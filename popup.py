@@ -74,67 +74,70 @@ class PopUp:
             finally:
                 ssh_config_file = open(os.path.expanduser("~/.ssh/config"), 'w')
                 ssh_config_file.write(new_ssh_config)
-                ssh_config_file.close()    
+                ssh_config_file.close()
+    def findInstances(self):
+        return None
 
 
 
-# Read config file
-config = ConfigParser.ConfigParser()
-config.read(os.path.expanduser("~/.popup.conf"))
-
-# Quit if we don't have the right options
-for option in ["image_id", "instance_type", "security_group", "key_name"]:
-    if config.has_option("EC2",option) is not True:
-        print "Config file missing %s in EC2 section. Exiting..." % option
-        exit(1)
-
-# Let the user pick an action
-parser = argparse.ArgumentParser(
-    description='PopUp an ephemeral EC2 instance',
-    epilog='Actions are: start, status, cleanup')
-parser.add_argument('action', nargs=1, help='PopUp Action to run')
-args = parser.parse_args()
-action = args.action[0]
-
-if action == 'start':
-    print 'Starting an instance...'
-    # Read in the user-data file
-    try:
-        f = open(os.path.expanduser(config.get("PopUp", "user_data_file")))
-        user_data = f.read()
-        f.close()
-    except:
-        exit(1)
-    # Create a new popup object
-    popup = PopUp(image_id = config.get("EC2", "image_id"),
-                  key_name = config.get("EC2", "key_name"),
-                  security_group = config.get("EC2", "security_group"),
-                  instance_type = config.get("EC2", "instance_type"),
-                  popup_id = config.get("PopUp", "id"),
-                  user_data = user_data,
-                  alias = config.get("PopUp", "alias"),
-                  user_name = config.get("PopUp", "user_name"))
-
-    # Start the instance
-    popup.start()
-    
-    print popup.id
-    print popup.public_dns_name
-    
-    popup.createSSHAlias()
-
-    print "PopUp instance %s started." % popup.id
-
-elif action == 'status':
-    print 'Getting status of running instances'
-    for instance in PopUp.findInstances():
-        print "PopUp: %s at %s " % (instance.id, instance.public_dns_name)
-elif action == 'cleanup':
-    print 'Cleaning up...'
-else:
-    print 'Invalid action.'
-    parser.print_help()
-    exit(1)
+if __name__ == "__main__":
+        # Read config file
+        config = ConfigParser.ConfigParser()
+        config.read(os.path.expanduser("~/.popup.conf"))
+         
+        # Quit if we don't have the right options
+        for option in ["image_id", "instance_type", "security_group", "key_name"]:
+            if config.has_option("EC2",option) is not True:
+                print "Config file missing %s in EC2 section. Exiting..." % option
+                exit(1)
+         
+        # Let the user pick an action
+        parser = argparse.ArgumentParser(
+            description='PopUp an ephemeral EC2 instance',
+            epilog='Actions are: start, status, cleanup')
+        parser.add_argument('action', nargs=1, help='PopUp Action to run')
+        args = parser.parse_args()
+        action = args.action[0]
+         
+        if action == 'start':
+            print 'Starting an instance...'
+            # Read in the user-data file
+            try:
+                f = open(os.path.expanduser(config.get("PopUp", "user_data_file")))
+                user_data = f.read()
+                f.close()
+            except:
+                exit(1)
+            # Create a new popup object
+            popup = PopUp(image_id = config.get("EC2", "image_id"),
+                          key_name = config.get("EC2", "key_name"),
+                          security_group = config.get("EC2", "security_group"),
+                          instance_type = config.get("EC2", "instance_type"),
+                          popup_id = config.get("PopUp", "id"),
+                          user_data = user_data,
+                          alias = config.get("PopUp", "alias"),
+                          user_name = config.get("PopUp", "user_name"))
+         
+            # Start the instance
+            popup.start()
+            
+            print popup.id
+            print popup.public_dns_name
+            
+            popup.createSSHAlias()
+         
+            print "PopUp instance %s started." % popup.id
+         
+        elif action == 'status':
+            print 'Getting status of running instances'
+            for instance in PopUp.findInstances():
+                print "PopUp: %s at %s " % (instance.id, instance.public_dns_name)
+        elif action == 'cleanup':
+            print 'Cleaning up...'
+        else:
+            print 'Invalid action.'
+            parser.print_help()
+            exit(1)
 
 
 
