@@ -79,7 +79,7 @@
                 "AWS::CloudFormation::Init": {
                     "PopUpCommands": {
                         "commands": {
-                            "AttachPopUpVolume": {
+                            "01AttachPopUpVolume": {
                                 "command": {
                                     "Fn::Join": [
                                         " ", 
@@ -87,6 +87,45 @@
                                             "/usr/local/bin/popup-ebs-attacher.py", 
                                             {
                                                 "Ref": "PopUpVolumeTagId"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            }, 
+                            "02CreateHomeDirectory": {
+                                "command": {
+                                    "Fn::Join": [
+                                        "", 
+                                        [
+                                            "/bin/mkdir /home/", 
+                                            {
+                                                "Ref": "KeyName"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            }, 
+                            "03MountHomeDirectory": {
+                                "command": {
+                                    "Fn::Join": [
+                                        "", 
+                                        [
+                                            "/bin/mount /dev/xvdf /home/", 
+                                            {
+                                                "Ref": "KeyName"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            }, 
+                            "04CreateUser": {
+                                "command": {
+                                    "Fn::Join": [
+                                        "", 
+                                        [
+                                            "/usr/sbin/adduser ", 
+                                            {
+                                                "Ref": "KeyName"
                                             }
                                         ]
                                     ]
