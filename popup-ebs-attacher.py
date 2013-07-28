@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import boto
 import time
 import urllib
@@ -27,8 +28,11 @@ class EC2Metadata:
 
 
 # parse arguments:
-# - Volume Tag
-popup_volume_id = 'DrocamorHomeDirectory'
+parser = argparse.ArgumentParser(description="Attach a PopUp volume to this instance (possibly creating it from a snapshot first)")
+parser.add_argument("volume_id", help="The value of the popup-volume-id tag for the volume you want to attach")
+args = parser.parse_args()
+
+popup_volume_id = args.volume_id
 
 ec2 = boto.connect_ec2()
 instance_metadata = EC2Metadata()

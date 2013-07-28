@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
+import argparse
 import boto
 
 # parse arguments:
-# - Volume Tag
-popup_volume_id = 'DrocamorHomeDirectory'
+parser = argparse.ArgumentParser(description="Make a snapshot of a volume and keep the 5 latest snapshots")
+parser.add_argument("volume_id", help="The value of the popup-volume-id tag for the volume you want to snapshot")
+args = parser.parse_args()
+
+popup_volume_id = args.volume_id
 
 ec2 = boto.connect_ec2()
 
