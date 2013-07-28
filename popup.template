@@ -1,0 +1,176 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09", 
+    "Description": "Autoscaling group for PopUp", 
+    "Parameters": {
+        "ImageId": {
+            "Default": "ami-10314d79", 
+            "Description": "AMI ID", 
+            "Type": "String"
+        }, 
+        "InstanceCount": {
+            "AllowedValues": [
+                "0", 
+                "1"
+            ], 
+            "ConstraintDescription": "Must be 0 or 1", 
+            "Default": "1", 
+            "Description": "The number of PopUp Instances (0 or 1)", 
+            "Type": "Number"
+        }, 
+        "InstanceType": {
+            "AllowedValues": [
+                "t1.micro", 
+                "m1.small", 
+                "m1.medium", 
+                "m1.large", 
+                "m1.xlarge", 
+                "m2.xlarge", 
+                "m2.2xlarge", 
+                "m2.4xlarge", 
+                "m3.xlarge", 
+                "c1.medium", 
+                "c1.xlarge", 
+                "cc1.4xlarge", 
+                "cc2.8xlarge", 
+                "cg1.4xlarge"
+            ], 
+            "ConstraintDescription": "must be a valid EC2 instance type.", 
+            "Default": "m3.xlarge", 
+            "Description": "PopUp instance type", 
+            "Type": "String"
+        }, 
+        "KeyName": {
+            "Description": "The EC2 Key Pair to allow SSH access to the instances", 
+            "Type": "String"
+        }, 
+        "SpotPrice": {
+            "Default": "0.1", 
+            "Description": "EC2 Spot Price", 
+            "Type": "String"
+        }
+    }, 
+    "Resources": {
+        "InstanceSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "Enable SSH and mosh access", 
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "0.0.0.0/0", 
+                        "FromPort": "22", 
+                        "IpProtocol": "tcp", 
+                        "ToPort": "22"
+                    }, 
+                    {
+                        "CidrIp": "0.0.0.0/0", 
+                        "FromPort": "60000", 
+                        "IpProtocol": "udp", 
+                        "ToPort": "60010"
+                    }
+                ]
+            }, 
+            "Type": "AWS::EC2::SecurityGroup"
+        }, 
+      "PopUpIamInstanceProfile": {
+        "Properties": {
+          "Path": "/",
+          "Roles": [
+            {
+              "Ref": "PopUpIamRole"
+            }
+          ]
+        },
+        "Type": "AWS::IAM::InstanceProfile"
+      },
+        "LaunchConfig": {
+            "Properties": {
+		"IamInstanceProfile": {
+		    "Ref": "PopUpIamInstanceProfile"
+		},
+                "ImageId": {
+                    "Ref": "ImageId"
+                }, 
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                }, 
+                "KeyName": {
+                    "Ref": "KeyName"
+                }, 
+                "SecurityGroups": [
+                    {
+                        "Ref": "InstanceSecurityGroup"
+                    }
+                ], 
+                "SpotPrice": {
+                    "Ref": "SpotPrice"
+                }
+            }, 
+            "Type": "AWS::AutoScaling::LaunchConfiguration"
+        }, 
+        "PopUpGroup": {
+            "Properties": {
+                "AvailabilityZones": {
+                    "Fn::GetAZs": ""
+                }, 
+                "LaunchConfigurationName": {
+                    "Ref": "LaunchConfig"
+                }, 
+                "MaxSize": {
+                    "Ref": "InstanceCount"
+                }, 
+                "MinSize": {
+                    "Ref": "InstanceCount"
+                }
+            }, 
+            "Type": "AWS::AutoScaling::AutoScalingGroup"
+        }, 
+        "PopUpIamRole": {
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "sts:AssumeRole"
+                            ], 
+                            "Effect": "Allow", 
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ]
+                }, 
+                "Path": "/", 
+                "Policies": [
+                    {
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "ec2:AttachVolume", 
+                                        "ec2:CreateSnapshot", 
+                                        "ec2:CreateTags", 
+                                        "ec2:CreateVolume", 
+                                        "ec2:DeleteSnapshot", 
+                                        "ec2:DeleteVolume", 
+                                        "ec2:DescribeSnapshotAttribute", 
+                                        "ec2:DescribeSnapshots", 
+                                        "ec2:DescribeVolumeAttribute", 
+                                        "ec2:DescribeVolumeStatus", 
+                                        "ec2:DescribeVolumes"
+                                    ], 
+                                    "Effect": "Allow", 
+                                    "Resource": [
+                                        "*"
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "PolicyName": "PopUpIamRolePolicy"
+                    }
+                ]
+            }, 
+            "Type": "AWS::IAM::Role"
+        }
+    }
+}
