@@ -71,6 +71,20 @@
             "Type": "AWS::EC2::SecurityGroup"
         }, 
         "LaunchConfig": {
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "config": {
+                        "packages": {
+                            "rubygems": {
+                                "htty": []
+                            }, 
+                            "yum": {
+                                "emacs": []
+                            }
+                        }
+                    }
+                }
+            }, 
             "Properties": {
                 "BlockDeviceMappings": [
                     {
@@ -116,7 +130,24 @@
                 }, 
                 "MinSize": {
                     "Ref": "InstanceCount"
-                }
+                }, 
+                "Tags": [
+                    {
+                        "Key": "Name", 
+                        "PropagateAtLaunch": true, 
+                        "Value": {
+                            "Fn::Join": [
+                                " ", 
+                                [
+                                    "PopUp instance for", 
+                                    {
+                                        "Ref": "KeyName"
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
             }, 
             "Type": "AWS::AutoScaling::AutoScalingGroup"
         }, 
