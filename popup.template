@@ -43,6 +43,10 @@
             "Description": "The EC2 Key Pair and primary username.", 
             "Type": "String"
         }, 
+        "PopUpVolumeTagId": {
+            "Description": "Value of popup-volume-id tag for EBS volume to attach", 
+            "Type": "String"
+        }, 
         "SpotPrice": {
             "Default": "0.1", 
             "Description": "EC2 Spot Price", 
@@ -73,7 +77,56 @@
         "LaunchConfig": {
             "Metadata": {
                 "AWS::CloudFormation::Init": {
-                    "config": {
+                    "PopUpCommands": {
+                        "commands": {
+                            "AttachPopUpVolume": {
+                                "command": {
+                                    "Fn::Join": [
+                                        " ", 
+                                        [
+                                            "/usr/local/bin/popup-ebs-attacher.py", 
+                                            {
+                                                "Ref": "PopUpVolumeTagId"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            }
+                        }
+                    }, 
+                    "PopUpFiles": {
+                        "files": {
+                            "/etc/cron.d/1PopUpSnapper": {
+                                "content": {
+                                    "Fn::Join": [
+                                        " ", 
+                                        [
+                                            "*/5 * * * * root /usr/local/bin/popup-ebs-snapper.py", 
+                                            {
+                                                "Ref": "PopUpVolumeTagId"
+                                            }
+                                        ]
+                                    ]
+                                }, 
+                                "group": "root", 
+                                "mode": "000644", 
+                                "owner": "root"
+                            }, 
+                            "/usr/local/bin/popup-ebs-attacher.py": {
+                                "group": "root", 
+                                "mode": "000755", 
+                                "owner": "root", 
+                                "source": "https://raw.github.com/drocamor/PopUp/v2/popup-ebs-attacher.py"
+                            }, 
+                            "/usr/local/bin/popup-ebs-snapper.py": {
+                                "group": "root", 
+                                "mode": "000755", 
+                                "owner": "root", 
+                                "source": "https://raw.github.com/drocamor/PopUp/v2/popup-ebs-snapper.py"
+                            }
+                        }
+                    }, 
+                    "UserPackages": {
                         "packages": {
                             "rubygems": {
                                 "htty": []
@@ -82,6 +135,13 @@
                                 "emacs": []
                             }
                         }
+                    }, 
+                    "configSets": {
+                        "default": [
+                            "PopUpFiles", 
+                            "PopUpCommands", 
+                            "UserPackages"
+                        ]
                     }
                 }
             }, 
