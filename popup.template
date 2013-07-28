@@ -3,7 +3,7 @@
     "Description": "Autoscaling group for PopUp", 
     "Parameters": {
         "ImageId": {
-            "Default": "ami-10314d79", 
+            "Default": "ami-05355a6c", 
             "Description": "AMI ID", 
             "Type": "String"
         }, 
@@ -40,7 +40,7 @@
             "Type": "String"
         }, 
         "KeyName": {
-            "Description": "The EC2 Key Pair to allow SSH access to the instances", 
+            "Description": "The EC2 Key Pair and primary username.", 
             "Type": "String"
         }, 
         "SpotPrice": {
@@ -70,22 +70,19 @@
             }, 
             "Type": "AWS::EC2::SecurityGroup"
         }, 
-      "PopUpIamInstanceProfile": {
-        "Properties": {
-          "Path": "/",
-          "Roles": [
-            {
-              "Ref": "PopUpIamRole"
-            }
-          ]
-        },
-        "Type": "AWS::IAM::InstanceProfile"
-      },
         "LaunchConfig": {
             "Properties": {
-		"IamInstanceProfile": {
-		    "Ref": "PopUpIamInstanceProfile"
-		},
+                "BlockDeviceMappings": [
+                    {
+                        "DeviceName": "/dev/sda1", 
+                        "Ebs": {
+                            "VolumeSize": "20"
+                        }
+                    }
+                ], 
+                "IamInstanceProfile": {
+                    "Ref": "PopUpIamInstanceProfile"
+                }, 
                 "ImageId": {
                     "Ref": "ImageId"
                 }, 
@@ -122,6 +119,17 @@
                 }
             }, 
             "Type": "AWS::AutoScaling::AutoScalingGroup"
+        }, 
+        "PopUpIamInstanceProfile": {
+            "Properties": {
+                "Path": "/", 
+                "Roles": [
+                    {
+                        "Ref": "PopUpIamRole"
+                    }
+                ]
+            }, 
+            "Type": "AWS::IAM::InstanceProfile"
         }, 
         "PopUpIamRole": {
             "Properties": {
