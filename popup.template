@@ -151,6 +151,22 @@
                                 "mode": "000644", 
                                 "owner": "root"
                             }, 
+                            "/etc/sudoers.d/popup": {
+                                "content": {
+                                    "Fn::Join": [
+                                        " ", 
+                                        [
+                                            {
+                                                "Ref": "KeyName"
+                                            }, 
+                                            "ALL = NOPASSWD: ALL"
+                                        ]
+                                    ]
+                                }, 
+                                "group": "root", 
+                                "mode": "000440", 
+                                "owner": "root"
+                            }, 
                             "/usr/local/bin/popup-ebs-attacher.py": {
                                 "group": "root", 
                                 "mode": "000755", 
