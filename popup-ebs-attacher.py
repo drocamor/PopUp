@@ -50,6 +50,11 @@ volume = sorted(volumes, key=lambda v: v.create_time)[-1]
 if volume.zone == instance_az:
     print "The volume is in our AZ, attaching to the instance"
     volume.attach(instance_id, device_id)
+    while volume.status != 'in-use':
+        print "Sleeping for 5 seconds for volume attachment..."
+        time.sleep(5)
+        volume.update()
+
 else:
     print "The volume is in another AZ."
     # Find the most recent snapshot
@@ -71,6 +76,11 @@ else:
     # Attach the volume to our instance
     print "Attaching new volume..."
     new_volume.attach(instance_id, device_id)
+    
+    while new_volume.status != 'in-use':
+        print "Sleeping for 5 seconds for volume attachment..."
+        time.sleep(5)
+        new_volume.update()
 
     # Delete the old volume
     print "Deleting old volume..."
