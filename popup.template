@@ -188,7 +188,8 @@
                                 "htty": []
                             }, 
                             "yum": {
-                                "emacs": []
+                                "git": [], 
+                                "rubygems": []
                             }
                         }
                     }, 
